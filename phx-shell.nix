@@ -1,13 +1,25 @@
-with import <nixpkgs> { };
+with import <nixpkgs> {};
 
 let
+  phx_new =  beamPackages.buildMix rec {
+      name = "phx_new";
+      version = "1.6.0";
+      src = fetchHex {
+      pkg = "phx_new";
+      version = "1.6.0";
+      sha256 = "2664453aba6a02b212724419af8d09e0437eb640e2725bd43f0d2201d9a3301d";
+    };
+
+    beamDeps = [];
+  };
+
   # define packages to install
   basePackages = [
     git
-    # replace with beam.packages.erlang.elixir_1_11 if you need
     beam.packages.erlang.elixir_1_12
     mix2nix
     postgresql_13
+    phx_new
   ];
 
   inputs = basePackages ++ lib.optionals stdenv.isLinux [ inotify-tools ]
@@ -23,12 +35,19 @@ let
     export PATH=$MIX_HOME/bin:$HEX_HOME/bin:$PATH
     # TODO: not sure how to make hex available without installing it afterwards.
     mix local.hex --if-missing
-    mix archive.install hex phx_new
+
+    export MIX_ENV=dev
+
+    # build and install the "mix phx.new" task
+    ln -sf ${phx_new}/lib/erlang/lib/phx_new-1.6.0/ebin .nix-mix/archives/phx_new/
+    mix archive.build -i .nix-mix/archives/phx_new/ -o .nix-hex/phx_new.ez
+    mix archive.install .nix-hex/phx_new.ez
+
     export LANG=en_US.UTF-8
     # keep your shell history in iex
     export ERL_AFLAGS="-kernel shell_history enabled"
 
-    # postges related
+    # postgres related
     # keep all your db data in a folder inside the project
     export PGDATA="$PWD/db"
 

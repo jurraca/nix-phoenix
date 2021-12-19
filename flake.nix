@@ -24,8 +24,7 @@
           pname = "my-phx-project";
           src = ./.;
           version = "0.0.0";
-          # TODO: generate secret and cookie and assign to env var. 
-
+          RELEASE_DISTRIBUTION = "none";
          };
     };
     in utils.lib.eachDefaultSystem (system: rec {
@@ -38,13 +37,18 @@
       devShells = {
         dev = import ./shell.nix {
           pkgs = legacyPackages;
-          db_name = "db";
+          db_name = "db_dev";
           MIX_ENV = "dev";
         };
         test = import ./shell.nix {
           pkgs = legacyPackages;
           db_name = "db_test";
           MIX_ENV = "test";
+        };
+          prod = import ./shell.nix {
+          pkgs = legacyPackages;
+          db_name = "db_prod";
+          MIX_ENV = "prod";
         };
       };
       apps.my-phx-project = utils.lib.mkApp { drv = packages.my-phx-project; };
